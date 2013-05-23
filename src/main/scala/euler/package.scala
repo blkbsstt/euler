@@ -16,10 +16,10 @@ package object euler {
 		def *|[U: Numeric](m: U) = timesDivisible(m,n)
 
 		def palindromic: Boolean = n === n.reversed
-		def reversed: T = BigInt(n.toString.reverse)
+		def reversed: T = BigDecimal(n.toString.reverse)
 		def big: BigInt = numeric.toType[BigInt](n)
-		def pow[U: ConvertableFrom](m: U) = numeric.pow(n, numeric.fromType(m))
-		def **[U: ConvertableFrom](m: U) = numeric.pow(n, numeric.fromType(m))
+		def pow[U: ConvertableFrom](m: U) = numeric.pow(n, m)
+		def **[U: ConvertableFrom](m: U) = numeric.pow(n, m)
 
 		def digits: Seq[Int] = n.toString.map(asDigit)
 
@@ -40,14 +40,17 @@ package object euler {
 
 		def \ [U: Numeric](m: U) = Rational(n, implicitly[Numeric[T]].fromType(m))
 
-	  implicit def fromByte(a:Byte): T = numeric.fromType(n)
-	  implicit def fromShort(a:Short): T = numeric.fromType(n)
-	  implicit def fromInt(a:Int): T = numeric.fromType(n)
-	  implicit def fromLong(a:Long): T = numeric.fromType(n)
-	  implicit def fromFloat(a:Float): T = numeric.fromType(n)
-	  implicit def fromDouble(a:Double): T = numeric.fromType(n)
-	  implicit def fromBigInt(a:BigInt): T = numeric.fromType(n)
-	  implicit def fromBigDecimal(a:BigDecimal): T = numeric.fromType(n)
+        /*
+          implicit def fromByte(a:Byte): T = numeric.fromType(a)
+          implicit def fromShort(a:Short): T = numeric.fromType(a)
+          implicit def fromInt(a:Int): T = numeric.fromType(a)
+          implicit def fromLong(a:Long): T = numeric.fromType(a)
+          implicit def fromFloat(a:Float): T = numeric.fromType(a)
+          implicit def fromDouble(a:Double): T = numeric.fromType(a)
+          implicit def fromBigInt(a:BigInt): T = numeric.fromType(a)
+          implicit def fromBigDecimal(a:BigDecimal): T = numeric.fromType(a)
+        */
+        implicit def fromConvertable[U: ConvertableFrom](m: U): T = numeric.fromType(m)
 	}
 
 	implicit def NumericImplicits[T: Numeric](n: T): NumericImplicits[T] = new NumericImplicits[T](n)

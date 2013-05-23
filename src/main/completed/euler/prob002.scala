@@ -1,6 +1,5 @@
 package euler
 object Problem002 extends App {
-    def fibHelper(a: Int, b: Int): Stream[Int] = b #:: fibHelper(b, a+b)
-    val fibStream = 1 #:: fibHelper(1,1)
-    println(fibStream filter(even) takeWhile(_ < 4000000) sum)
+    def fib(a: Int, b: Int): Stream[Int] = b #:: fib(b, a + b)
+    println((1 #:: fib(1, 1)) filter(_ % 2 == 0) takeWhile(_ < 4000000) sum)
 }
