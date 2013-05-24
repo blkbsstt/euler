@@ -7,7 +7,7 @@ import collection.immutable
 
 package object euler {
 
-	class NumericImplicits[T: Numeric](n: T) {
+	implicit class NumericImplicits[T: Numeric](n: T) {
 		val even = n % 2 === 0
 		val odd = !even
 
@@ -40,6 +40,8 @@ package object euler {
 
 		def \ [U: Numeric](m: U) = Rational(n, implicitly[Numeric[T]].fromType(m))
 
+        implicit def fromConvertable[U: ConvertableFrom](m: U): T = numeric.fromType(m)
+
         /*
           implicit def fromByte(a:Byte): T = numeric.fromType(a)
           implicit def fromShort(a:Short): T = numeric.fromType(a)
@@ -50,11 +52,8 @@ package object euler {
           implicit def fromBigInt(a:BigInt): T = numeric.fromType(a)
           implicit def fromBigDecimal(a:BigDecimal): T = numeric.fromType(a)
         */
-        implicit def fromConvertable[U: ConvertableFrom](m: U): T = numeric.fromType(m)
 	}
 
-	implicit def NumericImplicits[T: Numeric](n: T): NumericImplicits[T] = new NumericImplicits[T](n)
-		
 	def even[T: Numeric](n: T) = n even
 	def odd[T: Numeric](n: T) = n odd
 	def reverse[T: Numeric](n: T) = n reversed
@@ -77,7 +76,7 @@ package object euler {
 		val n = num/g
 		val d = denom/g
 
-		def unary_- = Rational(-n, d)
+		def unary_- = -n \ d
 		def reciprocal = Rational(d, n)
 
 		def *[U: Numeric](o: Rational[U]) = Rational(n * o.n, d * o.d)
@@ -120,7 +119,7 @@ package object euler {
 			}
 
 			def atkin(limit: Int): Seq[Int] = {
-				if(math.abs(limit) <= 3) return List(math.abs(limit))
+				if(limit.abs <= 3) return List(limit.abs)
 				val a = Array.ofDim[Boolean](limit + 1)
 				def toggle(n: Int) = {a(n) = !a(n)}
 
