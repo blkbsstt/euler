@@ -94,6 +94,7 @@ package object euler {
 		def equals [U: Numeric](o: Rational[U]) = (n === o.n) && (d === o.d)
 	}
 
+
 	object Rational {
 		def apply[T: Numeric](n: T, d: T) = new Rational(n, d)
 		def apply[T: Numeric](n: T) = new Rational(n, numeric.one)
