@@ -1,21 +1,14 @@
 package euler
 import io.Source
+import annotation.tailrec
 
 object Problem054 extends App {
-    val inputFile = if(args.size > 0) args(0) else "poker.txt"
-    println( 
-        (for(line <- Source.fromFile(if(args.size > 0) args(0) else "poker.txt").getLines) yield { 
-            val Seq(player1, player2) = line.split(" ").toList.map(Card(_)).grouped(5).map(Hand(_)).toSeq
-            println(line)
-            println(Seq(Seq(player1.rank, player1.rankValue), Seq(player2.rank, player2.rankValue)))
-            if (player1 > player2) {
-                println("Player 1 wins") 
-                1
-            } else {
-                println("Player 2 wins")
-                0
-            }
-        }).sum
+    val inputFile = if(args.size > 0) args(0) else "input/poker.txt"
+    println(
+        Source.fromFile(inputFile).getLines.count { line =>
+            val Seq(player1, player2) = line.split(" ").map(Card(_)).grouped(5).map(Hand(_)).toSeq
+            player1 beats player2
+        }
     )
 }
 
@@ -41,97 +34,66 @@ object Card {
         case "D" => 0
     }
 
-    val pattern = """([2-9]|[TJQKA])([SHCD])""".r
+    private val pattern = """([2-9]|[TJQKA])([SHCD])""".r
 }
 
 class Card(val value: Int, val suit: Int)
 
 object Hand {
-    def apply(l: List[Card]): Hand = new Hand(l)
+    def apply(l: Seq[Card]): Hand = new Hand(l.toList)
 
     def flush(hand: List[Card]) = hand.map(_.suit).distinct.size == 1
     def straight(hand: List[Card]) = hand.sliding(2).forall{ case x :: y :: _ => x.value - y.value == 1 }
 
-    def ofAKind(n: Int, hand: List[Card]) = {
-        hand.map(_.value).combinations(n).map(_.distinct).filter(_.size == 1).flatten.toList.sorted match {
-            case high :: _ => Some(high)
+    sealed abstract class CondCheck(f: List[Card] => Boolean) {
+        def unapply(hand: List[Card]) = if (f(hand)) Some(hand.head.value) else None
+    }
+
+    sealed abstract class OfAKind(n: Int) {
+        def unapply(hand: List[Card]) = hand.map(_.value).combinations(n).
+            map(_.distinct).filter(_.size == 1).flatten.toList.sorted.reverse match {
+                case high :: _ => Some(high)
+                case Nil => None
+            }
+    }
+
+    object StraightFlush extends CondCheck(hand => straight(hand) && flush(hand))
+    object Straight      extends CondCheck(straight)
+    object Flush         extends CondCheck(flush)
+    object HighCard      extends CondCheck(_ => true)
+
+    object FourOfAKind  extends OfAKind(4)
+    object ThreeOfAKind extends OfAKind(3)
+    object OnePair      extends OfAKind(2)
+
+    def pairInRemaining(hand: List[Card], value: Int) = hand.filter(_.value != value) match {
+        case OnePair(_) => true
+        case _ => false
+    }
+
+    object FullHouse {
+        def unapply(hand: List[Card]) = hand match {
+            case ThreeOfAKind(value) if pairInRemaining(hand, value) => Some(value)
             case _ => None
         }
     }
 
-    object RoyalFlush {
-        def unapply(hand: List[Card]) = {
-            hand match {
-                case StraightFlush(high) if high == 14 => true
-                case _ => false
-            }
-        }
-    }
-
-    object StraightFlush {
-        def unapply(hand: List[Card]) = if (straight(hand) && flush(hand)) Some(hand.head.value) else None
-    }
-
-    object FourOfAKind {
-        def unapply(hand: List[Card]) = ofAKind(4, hand)
-    }
-
-    object Straight {
-        def unapply(hand: List[Card]) = if (straight(hand)) Some(hand.head.value) else None
-    }
-            
-    object Flush {
-        def unapply(hand: List[Card]) = if (flush(hand)) Some(hand.head.value) else None
-    }
-
-    object ThreeOfAKind {
-        def unapply(hand: List[Card]) = ofAKind(3, hand)
-    }
-
-    object OnePair {
-        def unapply(hand: List[Card]) = ofAKind(2, hand)
-    }
-
-    def pairInRemaining(hand: List[Card], value: Int, takeHighest: Boolean) = hand.filter(_.value != value) match {
-        case OnePair(other) if takeHighest => Some(Seq(value, other).max)
-        case OnePair(_) => Some(value)
-        case _ => None
-    }
-
-    object FullHouse {
-        def unapply(hand: List[Card]) = {
-            hand match {
-                case ThreeOfAKind(value) => pairInRemaining(hand, value, false)
-                case _ => None
-            }
-        }
-    }
-
     object TwoPair {
-        def unapply(hand: List[Card]) = {
-            hand match {
-                case FourOfAKind(value) => Some(value)
-                case ThreeOfAKind(value) => pairInRemaining(hand, value, true)
-                case OnePair(value) => pairInRemaining(hand, value, true)
-                case _ => None
-            }
+        def unapply(hand: List[Card]) = hand match {
+            case OnePair(value) if pairInRemaining(hand, value) => Some(value)
+            case _ => None
         }
     }
 
-    object HighCard {
-        def unapply(hand: List[Card]) = Some(hand.head.value)
-    }
-
-    def tieBreak(a: List[Card], b: List[Card]): Boolean = {
-        (a.head.value > b.head.value) || (a.head.value == b.head.value && tieBreak(a.tail, b.tail))
-    }
+    @tailrec def tieBreak(a: List[Card], b: List[Card]): Boolean =
+        (a.head.value > b.head.value) ||
+        (a.head.value == b.head.value && tieBreak(a.tail, b.tail))
 }
 
 class Hand(c: List[Card]) {
     import Hand._
-    val cards = c.sortBy(_.value).reverse 
+    val cards = c.sortBy(_.value).reverse
     val (rank, rankValue) = cards match {
-        case RoyalFlush()        => (9, 14)
         case StraightFlush(high) => (8, high)
         case FourOfAKind(value)  => (7, value)
         case FullHouse(high)     => (6, high)
@@ -142,9 +104,12 @@ class Hand(c: List[Card]) {
         case OnePair(value)      => (1, value)
         case HighCard(high)      => (0, high)
     }
-    
-    def > (other: Hand): Boolean = {
-        rank > other.rank || (rank == other.rank && (rankValue > other.rankValue || (rankValue == other.rankValue && tieBreak(this.cards, other.cards))))
-    }
 
+    def beats (other: Hand): Boolean = {
+        rank > other.rank ||
+        (rank == other.rank &&
+            (rankValue > other.rankValue ||
+                (rankValue == other.rankValue &&
+                    tieBreak(this.cards, other.cards))))
+    }
 }

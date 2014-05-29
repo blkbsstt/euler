@@ -1,5 +1,6 @@
 import spire.math._
 import spire.math.prime.Factors
+import spire.math.ConvertableFrom._
 import spire.implicits._
 import spire.algebra._
 import collection.mutable
@@ -20,23 +21,34 @@ package object euler {
         def congruent(j: T) = new Congruence(i,j)
         def ≡(j: T) = i congruent j
 
+        def factors = Factors(i.big).toMap.map{ case (x, y) => (ConvertableFromSafeLong.toType[T](x), y) }
+        def uniqueFactors = factors.keySet
+
         val divisorMemo = collection.mutable.HashMap.empty[T, Seq[T]]
         def divisors: Seq[T] = {
             if (!divisorMemo.contains(i)) {
-                val factors = prime.factors(i).flatMap{ case (x:T,y:Int) => List.fill(y)(x) }
-                val combs = factors.indices.flatMap(j => factors.combinations(j + 1).map(_.reduce((x:T,y:T) => x * y)))
+                val factors: Seq[T]  = i.factors.flatMap(
+                    (p:(T, Int)) => List.fill(p._2)(p._1)
+                ).toSeq
+                val combs = factors.indices.flatMap(
+                    j => factors.combinations(j + 1).map(_.reduce((x:T, y:T) => x * y))
+                )
                 divisorMemo(i) = implicitly[Integral[T]].fromInt(1) +: combs
             }
             divisorMemo(i)
         }
 
-        def divisorCount = Factors(i).toMap.values.sum
+        def divisorCount = factors.values.sum
     }
 
     def asDigit(c: Char) = c.asDigit
 
     class Congruence[T: Integral](a: T, b: T) {
         def mod(c: T): Boolean = c divides (a - b)
+    }
+
+    object prime {
+        def sieve(n: Int) = for (i <- 2 until n; if i.isPrime) yield i
     }
 
     /*

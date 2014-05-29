@@ -1,3 +1,3 @@
-scalaVersion := "2.10.2"
+scalaVersion := "2.11.0"
 
-libraryDependencies += "org.spire-math" %% "spire" % "0.7.3"
+libraryDependencies += "org.spire-math" %% "spire" % "0.7.5"
