@@ -1,4 +1,5 @@
 package euler
+import spire.math.Rational
 
 object Problem033 extends App {
     println( (for (
@@ -13,5 +14,5 @@ object Problem033 extends App {
             (i == l && Rational(j, k) == v) ||
             (j == k && Rational(i, l) == v) ||
             (j == l && Rational(i, k) == v)
-        ) yield v).reduce(_ * _).d )
+        ) yield v).reduce(_ * _).denominator )
 }
