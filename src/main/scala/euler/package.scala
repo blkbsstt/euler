@@ -48,8 +48,12 @@ package object euler {
     }
 
     object prime {
-        def sieve(n: Int) = for (i <- 2 until n; if i.isPrime) yield i
+        def sieve(n: Int) = primes.takeWhile(_ <= n)
     }
+    // Should be using Natural, but it doesn't have isPrime. Sad face.
+    def naturals = naturalsFrom(SafeLong.one)
+    def naturalsFrom(n: SafeLong): Stream[SafeLong] = n #:: naturalsFrom(n + 1)
+    def primes = naturals.filter(_.isPrime)
 
     /*
     class NaturalImplicits(n: Natural) {
